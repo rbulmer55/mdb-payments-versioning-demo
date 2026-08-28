@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UK Benefit Payments — Polymorphic Collection Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #1e293b;
+        --panel2: #172033;
+        --line: #334155;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --uc: #00ed64;
+        --pip: #38bdf8;
+        --sp: #f59e0b;
+        --accent: #00ed64;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.5 "Inter",
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      header {
+        padding: 26px 32px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: baseline;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      h1 {
+        margin: 0;
+        font-size: 21px;
+        letter-spacing: -0.2px;
+      }
+      header .sub {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      header .spacer {
+        flex: 1;
+      }
+      button {
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px 14px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      main {
+        padding: 24px 32px 60px;
+        max-width: 1500px;
+        margin: 0 auto;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+      .kpis {
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        margin-bottom: 22px;
+      }
+      .charts {
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 18px 20px;
+      }
+      .card h2 {
+        margin: 0 0 4px;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .card .hint {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 0 0 14px;
+      }
+      .kpi .value {
+        font-size: 30px;
+        font-weight: 650;
+        letter-spacing: -1px;
+        margin-top: 6px;
+      }
+      .kpi .value small {
+        font-size: 13px;
+        color: var(--muted);
+        font-weight: 400;
+      }
+      canvas {
+        max-height: 280px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th {
+        text-align: left;
+        color: var(--muted);
+        font-weight: 600;
+        padding: 6px 8px;
+        border-bottom: 1px solid var(--line);
+      }
+      td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #263449;
+      }
+      td.num,
+      th.num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1px solid;
+      }
+      .section-title {
+        margin: 34px 0 6px;
+        font-size: 16px;
+      }
+      .section-note {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 0 0 14px;
+        max-width: 90ch;
+      }
+      .docs {
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+        align-items: start;
+      }
+      pre {
+        background: var(--panel2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        overflow: auto;
+        max-height: 380px;
+        font-size: 11.5px;
+        line-height: 1.45;
+        color: #cbd5e1;
+        margin: 0;
+      }
+      .k {
+        color: #7dd3fc;
+      }
+      .s {
+        color: #86efac;
+      }
+      .n {
+        color: #fbbf24;
+      }
+      .b {
+        color: #f472b6;
+      }
+      .badge-uc {
+        color: var(--uc);
+        border-color: var(--uc);
+      }
+      .badge-pip {
+        color: var(--pip);
+        border-color: var(--pip);
+      }
+      .badge-sp {
+        color: var(--sp);
+        border-color: var(--sp);
+      }
+      .tabs {
+        display: flex;
+        gap: 6px;
+        margin: 10px 0 12px;
+        border-bottom: 1px solid var(--line);
+      }
+      .tab {
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        padding: 6px 12px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .tab:hover {
+        color: var(--text);
+      }
+      .tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+      .empty {
+        color: var(--muted);
+        font-size: 13px;
+        font-style: italic;
+      }
+      code {
+        background: var(--panel2);
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 12.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>UK Benefit Payments</h1>
+      <span class="sub"
+        >one collection · many shapes ·
+        <span id="doc-count">—</span> documents</span
+      >
+      <span class="spacer"></span>
+      <button id="refresh">Refresh</button>
+    </header>
+
+    <main>
+      <div class="grid kpis" id="kpis"></div>
+
+      <div class="card" style="margin-bottom: 22px">
+        <h2>Ingested payment files</h2>
+        <p class="hint">
+          Every figure on this page traces back to these files via
+          <code>ingest.sourceFile</code>.
+        </p>
+        <div id="file-table"></div>
+      </div>
+
+      <div class="card" style="margin-bottom: 22px">
+        <h2>Document schema versions</h2>
+        <p class="hint">
+          Each benefit type versions independently. Old and new shapes coexist
+          in the same collection — no backfill, no downtime.
+        </p>
+        <div id="version-table"></div>
+      </div>
+
+      <div class="grid charts">
+        <div class="card">
+          <h2>Payments by benefit type</h2>
+          <p class="hint">
+            A single <code>$group</code> on the discriminator field.
+          </p>
+          <canvas id="chart-type"></canvas>
+        </div>
+        <div class="card">
+          <h2>Value paid by benefit type &amp; month</h2>
+          <p class="hint">
+            Amounts live under different keys per type —
+            <code>$ifNull</code> reconciles them.
+          </p>
+          <canvas id="chart-trend"></canvas>
+        </div>
+        <div class="card">
+          <h2>Payment status</h2>
+          <p class="hint">
+            Shared field, so it works across every type unchanged.
+          </p>
+          <canvas id="chart-status"></canvas>
+        </div>
+        <div class="card">
+          <h2>Top households by location</h2>
+          <p class="hint">
+            Total value paid by city, all benefit types combined.
+          </p>
+          <canvas id="chart-city"></canvas>
+        </div>
+      </div>
+
+      <h3 class="section-title">Type-specific analytics</h3>
+      <p class="section-note">
+        These panels query fields that only exist on <em>some</em> documents. In
+        a relational model each would need its own table and its own join; here
+        they are just paths into the same collection.
+      </p>
+
+      <div class="grid charts">
+        <div class="card">
+          <h2>
+            <span class="pill badge-uc">Universal Credit</span> award elements
+          </h2>
+          <p class="hint">
+            Nested array <code>elements[]</code> — no child table, no join.
+          </p>
+          <canvas id="chart-elements"></canvas>
+        </div>
+        <div class="card">
+          <h2>
+            <span class="pill badge-uc">Universal Credit</span> deductions
+          </h2>
+          <p class="hint">
+            <code>$unwind</code> on <code>paymentDetails.deductions[]</code>.
+          </p>
+          <canvas id="chart-deductions"></canvas>
+        </div>
+        <div class="card">
+          <h2><span class="pill badge-pip">PIP</span> component award rates</h2>
+          <p class="hint">
+            Daily living × mobility, from the embedded assessment.
+          </p>
+          <div id="pip-table"></div>
+        </div>
+        <div class="card">
+          <h2><span class="pill badge-sp">State Pension</span> entitlement</h2>
+          <p class="hint">
+            Added after go-live via <code>npm run extend</code>.
+          </p>
+          <div id="pension-table"></div>
+        </div>
+      </div>
+
+      <h3 class="section-title">The documents themselves</h3>
+      <p class="section-note">
+        One column per benefit type, retrieved by one query, from one
+        collection, with one index set. Every one of them was validated twice:
+        by Zod in TypeScript, and by <code>$jsonSchema</code> in MongoDB. Switch
+        the Universal Credit tabs between v1 and v2: same collection, same
+        indexes, same dashboard, no backfill.
+      </p>
+      <div class="grid docs" id="docs"></div>
+
+      <h3 class="section-title">The contract enforced by the database</h3>
+      <p class="section-note">
+        Read live from the collection options. <code>oneOf</code> means a
+        document must satisfy the shared core <em>and</em> exactly one
+        benefit-specific shape — flexible, but not a free-for-all.
+      </p>
+      <div class="card"><pre id="validator">Loading…</pre></div>
+    </main>
+
+    <script>
+      const COLOURS = {
+        "Universal Credit": "#00ed64",
+        "Personal Independence Payment": "#38bdf8",
+        "State Pension": "#f59e0b",
+      };
+      const money = (n) =>
+        "£" +
+        Number(n || 0).toLocaleString("en-GB", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      const compact = (n) =>
+        "£" +
+        Number(n || 0).toLocaleString("en-GB", {
+          notation: "compact",
+          maximumFractionDigits: 1,
+        });
+      const charts = {};
+
+      Chart.defaults.color = "#94a3b8";
+      Chart.defaults.borderColor = "#334155";
+      Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+
+      function draw(id, config) {
+        charts[id]?.destroy();
+        charts[id] = new Chart(document.getElementById(id), config);
+      }
+
+      function highlight(obj) {
+        return JSON.stringify(obj, null, 2)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/"([^"]+)":/g, '<span class="k">"$1"</span>:')
+          .replace(/: "([^"]*)"/g, ': <span class="s">"$1"</span>')
+          .replace(/: (-?\d+\.?\d*)/g, ': <span class="n">$1</span>')
+          .replace(/: (true|false|null)/g, ': <span class="b">$1</span>');
+      }
+
+      function renderKpis(s) {
+        const h = s.headline,
+          r = s.riskFlags || {};
+        const items = [
+          [
+            "Payments issued",
+            h.payments.toLocaleString("en-GB"),
+            "across all benefit types",
+          ],
+          ["Total value paid", compact(h.totalPaid), money(h.totalPaid)],
+          [
+            "Households reached",
+            (h.households || 0).toLocaleString("en-GB"),
+            "distinct claimant references",
+          ],
+          [
+            "Average payment",
+            money(h.avgPayment),
+            "largest " + money(h.maxPayment),
+          ],
+          ["Payment files", s.byFile.length, "ingested into one collection"],
+          ["Benefit types", s.byType.length, "in one collection"],
+          [
+            "Manual review",
+            (r.manualReview || 0).toLocaleString("en-GB"),
+            (r.sanctioned || 0) + " with sanctions",
+          ],
+        ];
+        document.getElementById("kpis").innerHTML = items
+          .map(
+            ([label, value, sub]) => `
+    <div class="card kpi"><h2>${label}</h2>
+      <div class="value">${value}</div>
+      <small style="color:var(--muted)">${sub}</small>
+    </div>`,
+          )
+          .join("");
+        document.getElementById("doc-count").textContent =
+          h.payments.toLocaleString("en-GB");
+      }
+
+      function renderCharts(s) {
+        draw("chart-type", {
+          type: "doughnut",
+          data: {
+            labels: s.byType.map((t) => t.benefitType),
+            datasets: [
+              {
+                data: s.byType.map((t) => t.count),
+                backgroundColor: s.byType.map(
+                  (t) => COLOURS[t.benefitType] || "#a78bfa",
+                ),
+                borderColor: "#1e293b",
+                borderWidth: 3,
+              },
+            ],
+          },
+          options: {
+            plugins: {
+              legend: { position: "bottom", labels: { boxWidth: 10 } },
+              tooltip: {
+                callbacks: {
+                  label: (c) => {
+                    const t = s.byType[c.dataIndex];
+                    return `${t.count} payments · ${money(t.totalPaid)} · avg ${money(t.avgPayment)}`;
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        const months = [...new Set(s.trend.map((t) => t.month))].sort();
+        const types = [...new Set(s.trend.map((t) => t.benefitType))];
+        draw("chart-trend", {
+          type: "bar",
+          data: {
+            labels: months,
+            datasets: types.map((type) => ({
+              label: type,
+              data: months.map(
+                (m) =>
+                  s.trend.find((t) => t.month === m && t.benefitType === type)
+                    ?.totalPaid || 0,
+              ),
+              backgroundColor: COLOURS[type] || "#a78bfa",
+            })),
+          },
+          options: {
+            scales: {
+              x: { stacked: true, grid: { display: false } },
+              y: { stacked: true, ticks: { callback: compact } },
+            },
+            plugins: {
+              legend: { position: "bottom", labels: { boxWidth: 10 } },
+              tooltip: {
+                callbacks: {
+                  label: (c) => `${c.dataset.label}: ${money(c.parsed.y)}`,
+                },
+              },
+            },
+          },
+        });
+
+        const statusColour = {
+          Paid: "#00ed64",
+          Pending: "#38bdf8",
+          Held: "#f59e0b",
+          Failed: "#ef4444",
+          Cancelled: "#64748b",
+        };
+        draw("chart-status", {
+          type: "bar",
+          data: {
+            labels: s.byStatus.map((x) => x.status),
+            datasets: [
+              {
+                data: s.byStatus.map((x) => x.count),
+                backgroundColor: s.byStatus.map(
+                  (x) => statusColour[x.status] || "#a78bfa",
+                ),
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (c) =>
+                    `${c.parsed.x} payments · ${money(s.byStatus[c.dataIndex].value)}`,
+                },
+              },
+            },
+            scales: {
+              x: { grid: { color: "#263449" } },
+              y: { grid: { display: false } },
+            },
+          },
+        });
+
+        draw("chart-city", {
+          type: "bar",
+          data: {
+            labels: s.byCity.map((c) => c.city),
+            datasets: [
+              {
+                data: s.byCity.map((c) => c.totalPaid),
+                backgroundColor: "#00ed64aa",
+                borderColor: "#00ed64",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (c) =>
+                    `${money(c.parsed.x)} · ${s.byCity[c.dataIndex].count} payments`,
+                },
+              },
+            },
+            scales: {
+              x: { ticks: { callback: compact }, grid: { color: "#263449" } },
+              y: { grid: { display: false } },
+            },
+          },
+        });
+
+        draw("chart-elements", {
+          type: "bar",
+          data: {
+            labels: s.ucElements.map((e) => e.elementType),
+            datasets: [
+              {
+                data: s.ucElements.map((e) => e.total),
+                backgroundColor: "#00ed64aa",
+                borderColor: "#00ed64",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (c) =>
+                    `${money(c.parsed.y)} total · avg ${money(s.ucElements[c.dataIndex].avg)}`,
+                },
+              },
+            },
+            scales: {
+              y: { ticks: { callback: compact } },
+              x: { grid: { display: false } },
+            },
+          },
+        });
+
+        draw("chart-deductions", {
+          type: "bar",
+          data: {
+            labels: s.deductions.map((d) => d.type),
+            datasets: [
+              {
+                data: s.deductions.map((d) => d.total),
+                backgroundColor: "#f59e0baa",
+                borderColor: "#f59e0b",
+                borderWidth: 1,
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: (c) =>
+                    `${money(c.parsed.x)} across ${s.deductions[c.dataIndex].count} payments`,
+                },
+              },
+            },
+            scales: {
+              x: { ticks: { callback: compact }, grid: { color: "#263449" } },
+              y: { grid: { display: false } },
+            },
+          },
+        });
+      }
+
+      function renderTables(s) {
+        const badge = {
+          "Universal Credit": "badge-uc",
+          "Personal Independence Payment": "badge-pip",
+          "State Pension": "badge-sp",
+        };
+        document.getElementById("file-table").innerHTML = s.byFile.length
+          ? `
+    <table><thead><tr><th>Source file</th><th>Benefit types</th><th class="num">Records</th><th class="num">Value paid</th><th>Payment dates</th><th>Ingested</th></tr></thead>
+    <tbody>${s.byFile
+      .map(
+        (f) => `<tr>
+      <td><code>${f.sourceFile}</code></td>
+      <td>${f.benefitTypes.map((t) => `<span class="pill ${badge[t]}">${t}</span>`).join(" ")}</td>
+      <td class="num">${f.count.toLocaleString("en-GB")}</td>
+      <td class="num">${money(f.totalPaid)}</td>
+      <td>${f.firstPaymentDate} → ${f.lastPaymentDate}</td>
+      <td>${new Date(f.ingestedAt).toLocaleString("en-GB")}</td></tr>`,
+      )
+      .join("")}</tbody></table>`
+          : '<p class="empty">Nothing ingested yet — run <code>npm run ingest:reset</code>.</p>';
+
+        document.getElementById("version-table").innerHTML = s.byVersion.length
+          ? `
+    <table><thead><tr><th>Benefit type</th><th>Schema version</th><th class="num">Documents</th></tr></thead>
+    <tbody>${s.byVersion
+      .map(
+        (v) => `<tr>
+      <td><span class="pill ${badge[v.benefitType]}">${v.benefitType}</span></td>
+      <td>v${v.schemaVersion}</td>
+      <td class="num">${v.count.toLocaleString("en-GB")}</td></tr>`,
+      )
+      .join("")}</tbody></table>`
+          : '<p class="empty">Nothing ingested yet.</p>';
+
+        document.getElementById("pip-table").innerHTML = s.pipRates.length
+          ? `
+    <table><thead><tr><th>Daily living</th><th>Mobility</th><th class="num">Claims</th></tr></thead>
+    <tbody>${s.pipRates.map((r) => `<tr><td>${r.dailyLiving}</td><td>${r.mobility}</td><td class="num">${r.count}</td></tr>`).join("")}</tbody></table>`
+          : '<p class="empty">No PIP payments ingested.</p>';
+
+        document.getElementById("pension-table").innerHTML = s
+          .pensionEntitlement.length
+          ? `
+    <table><thead><tr><th>Full rate</th><th class="num">Claims</th><th class="num">Avg qual. years</th><th class="num">Avg weekly rate</th></tr></thead>
+    <tbody>${s.pensionEntitlement.map((r) => `<tr><td>${r.fullRateEligible ? "Yes" : "No"}</td><td class="num">${r.count}</td><td class="num">${r.avgQualifyingYears}</td><td class="num">${money(r.avgWeeklyRate)}</td></tr>`).join("")}</tbody></table>`
+          : '<p class="empty">No State Pension payments yet — run <code>npm run extend</code> and refresh. The dashboard code does not change.</p>';
+      }
+
+      async function renderDocs(s) {
+        const badge = {
+          "Universal Credit": "badge-uc",
+          "Personal Independence Payment": "badge-pip",
+          "State Pension": "badge-sp",
+        };
+        const note = {
+          1: "the original shape",
+          2: "adds <code>earnedIncome</code> and <code>deductions[].recoveryReference</code>",
+        };
+        const order = [
+          "Universal Credit",
+          "Personal Independence Payment",
+          "State Pension",
+        ];
+
+        // Which versions exist is read from the data, so a new version appears
+        // as a new tab without touching this code.
+        const groups = order
+          .map((benefitType) => ({
+            benefitType,
+            versions: s.byVersion
+              .filter((v) => v.benefitType === benefitType)
+              .map((v) => v.schemaVersion)
+              .sort((a, b) => a - b),
+          }))
+          .filter((g) => g.versions.length);
+
+        const requests = groups.flatMap((g) =>
+          g.versions.map((version) => ({
+            benefitType: g.benefitType,
+            version,
+          })),
+        );
+        const results = await Promise.all(
+          requests.map((r) =>
+            fetch(
+              `/api/payments?benefitType=${encodeURIComponent(r.benefitType)}&schemaVersion=${r.version}&limit=10`,
+            ).then((res) => res.json()),
+          ),
+        );
+        const sample = new Map(
+          requests.map((r, i) => [
+            `${r.benefitType}|${r.version}`,
+            // Prefer a document with deductions so the v2 additions are visible.
+            results[i].find((d) => d.paymentDetails?.deductions?.length) ||
+              results[i][0],
+          ]),
+        );
+
+        document.getElementById("docs").innerHTML = groups
+          .map(({ benefitType, versions }) => {
+            const tabs = versions
+              .map(
+                (v, i) =>
+                  `<button class="tab${i === 0 ? " active" : ""}" data-type="${benefitType}" data-version="${v}">v${v}</button>`,
+              )
+              .join("");
+            const panes = versions
+              .map((v, i) => {
+                const doc = sample.get(`${benefitType}|${v}`);
+                return `<div class="tab-pane" data-type="${benefitType}" data-version="${v}"${i === 0 ? "" : " hidden"}>
+        <p class="hint">${note[v] ?? `schema version ${v}`}</p>
+        ${doc ? `<pre>${highlight(doc)}</pre>` : '<p class="empty">None ingested yet.</p>'}
+      </div>`;
+              })
+              .join("");
+            return `<div class="card">
+      <h2><span class="pill ${badge[benefitType]}">${benefitType}</span></h2>
+      <div class="tabs">${tabs}</div>
+      ${panes}
+    </div>`;
+          })
+          .join("");
+      }
+
+      // One listener for every tab, now and after any re-render.
+      document.getElementById("docs").addEventListener("click", (event) => {
+        const tab = event.target.closest(".tab");
+        if (!tab) return;
+        const { type, version } = tab.dataset;
+        const card = tab.closest(".card");
+        card
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.toggle("active", t === tab));
+        card.querySelectorAll(".tab-pane").forEach((pane) => {
+          pane.hidden = pane.dataset.version !== version;
+        });
+      });
+
+      async function load() {
+        const stats = await fetch("/api/stats").then((r) => r.json());
+        renderKpis(stats);
+        renderCharts(stats);
+        renderTables(stats);
+        await renderDocs(stats);
+        const validator = await fetch("/api/validator").then((r) => r.json());
+        document.getElementById("validator").innerHTML = highlight(validator);
+      }
+
+      document.getElementById("refresh").addEventListener("click", load);
+      load();
+    </script>
+  </body>
+</html>

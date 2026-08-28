@@ -1,0 +1,32 @@
+{
+  "name": "dwp-payment-example-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Polymorphic UK benefit payment ingestion demo on MongoDB Atlas Local",
+  "scripts": {
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down",
+    "db:reset": "docker compose down -v && docker compose up -d --wait",
+    "make:files": "tsx src/setup/make-payment-files.ts",
+    "ingest": "tsx src/setup/ingest.ts",
+    "ingest:reset": "tsx src/setup/ingest.ts --drop",
+    "extend": "tsx src/migrations/2026-08-add-state-pension.ts",
+    "upgrade": "tsx src/migrations/2026-09-universal-credit-v2.ts",
+    "dev": "tsx watch src/app/server.ts",
+    "start": "tsx src/app/server.ts",
+    "demo": "npm run db:up && npm run ingest:reset && npm run start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "mongodb": "^6.12.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}

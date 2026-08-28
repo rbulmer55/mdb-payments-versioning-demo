@@ -1,0 +1,29 @@
+services:
+  mongodb:
+    image: mongodb/mongodb-atlas-local:latest
+    container_name: dwp-atlas-local
+    # Stable hostname: Atlas Local initiates its single-node replica set against
+    # the container hostname, which otherwise changes on every recreate and
+    # leaves the node stuck as an RSGhost ("not a member of it").
+    hostname: dwp-atlas-local
+    ports:
+      # 27020 on the host so the demo never fights a locally installed mongod
+      # (27017-27019 are the usual local replica set ports).
+      - "27020:27017"
+    # Deliberately ephemeral: the payment file is the source of truth and
+    # `npm run ingest` rebuilds the collection in seconds.
+    healthcheck:
+      # Atlas Local is a single-node replica set: wait for it to be electable-writable,
+      # not merely pingable, otherwise the first write fails with NotWritablePrimary.
+      test:
+        [
+          "CMD",
+          "mongosh",
+          "--quiet",
+          "--eval",
+          "if (!db.hello().isWritablePrimary) quit(1)",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
