@@ -341,12 +341,22 @@ export function buildValidator(titles: string[]): Document {
 }
 
 /** What the collection starts life accepting, before any migration runs. */
-export const validatorV1 = buildValidator(["Universal Credit v1", "Personal Independence Payment v1"]);
+export const validatorV1 = buildValidator([
+  "Universal Credit v1",
+  "Personal Independence Payment v1",
+]);
 
 /** Reads the branches currently enforced by the collection. */
-export async function currentBranches(db: Db, collection: string): Promise<string[]> {
-  const [info] = await db.listCollections({ name: collection }, { nameOnly: false }).toArray();
-  const oneOf = info?.options?.validator?.$jsonSchema?.oneOf as { title?: string }[] | undefined;
+export async function currentBranches(
+  db: Db,
+  collection: string,
+): Promise<string[]> {
+  const [info] = await db
+    .listCollections({ name: collection }, { nameOnly: false })
+    .toArray();
+  const oneOf = info?.options?.validator?.$jsonSchema?.oneOf as
+    | { title?: string }[]
+    | undefined;
   return (oneOf ?? []).flatMap((b) => (b.title ? [b.title] : []));
 }
 

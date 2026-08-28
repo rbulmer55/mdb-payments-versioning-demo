@@ -48,9 +48,13 @@ async function main() {
   const probe = docs[0]!;
   try {
     await coll.insertOne(probe);
-    console.log(`ℹ️  Collection already accepts "${BRANCH}" — this migration has run before`);
+    console.log(
+      `ℹ️  Collection already accepts "${BRANCH}" — this migration has run before`,
+    );
   } catch {
-    console.log(`⛔ Database rejected it: the current contract does not include "${BRANCH}".`);
+    console.log(
+      `⛔ Database rejected it: the current contract does not include "${BRANCH}".`,
+    );
     console.log("   Nothing was corrupted. Flexible ≠ uncontrolled.\n");
   }
 

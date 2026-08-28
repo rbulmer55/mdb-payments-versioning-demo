@@ -141,7 +141,11 @@ benefit types there were.
 currently accepts and adds its own, rather than replacing the validator with a fixed snapshot:
 
 ```ts
-const { added, titles } = await enableBranch(db, COLLECTION_NAME, "State Pension v1");
+const { added, titles } = await enableBranch(
+  db,
+  COLLECTION_NAME,
+  "State Pension v1",
+);
 ```
 
 So `extend` then `upgrade`, or `upgrade` then `extend`, both converge on the same four-branch
